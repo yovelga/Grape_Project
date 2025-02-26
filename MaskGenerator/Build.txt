@@ -1,0 +1,2 @@
+cd /storage/yovelg/Grape/segment-anything-2
+pip install -e .

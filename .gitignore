@@ -1,0 +1,28 @@
+# 📂 התעלמות מקבצי תמונות
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+
+# 📂 התעלמות מקבצי JSON
+*.json
+
+# 📂 התעלמות מסביבות וירטואליות
+.venv/
+venv/
+
+# 📂 התעלמות מקבצי מערכת ו-PyCharm
+.idea/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+
+# 📂 התעלמות מקבצי לוג
+*.log
+
+# 📂 התעלמות מקבצי אובייקטים בינאריים
+*.bin
+*.exe
+*.dll

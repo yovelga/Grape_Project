@@ -16,6 +16,7 @@ def load_rgb_image_from_folder(folder_path):
     if rgb_files:
         rgb_path = os.path.join(HS_folder_path, rgb_files[0])
         image = cv2.imread(rgb_path)
+        # print(f"shape: {image.shape}")
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     else:
         raise FileNotFoundError("No RGB image found in the folder.")

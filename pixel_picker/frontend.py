@@ -55,21 +55,24 @@ class HSI_RGB_Viewer(QMainWindow):
         self.rgb_label = QLabel("RGB Image (HS folder) will be displayed here")
         self.rgb_label.setAlignment(Qt.AlignCenter)
         self.rgb_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.rgb_label.setMinimumSize(500, 500)
+        self.rgb_label.setMinimumSize(512, 512)
+        self.rgb_label.setMaximumSize(512, 512)
         self.image_grid.addWidget(self.rgb_label, 0, 0)
 
         # HSI Image Label
         self.hsi_label = QLabel("HSI Image will be displayed here")
         self.hsi_label.setAlignment(Qt.AlignCenter)
         self.hsi_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.hsi_label.setMinimumSize(500, 500)
+        self.hsi_label.setMinimumSize(512, 512)
+        self.hsi_label.setMaximumSize(512, 512)
         self.image_grid.addWidget(self.hsi_label, 0, 1)
 
         # Canon RGB Image Label
         self.canon_rgb_label = QLabel("Canon RGB Image will be displayed here")
         self.canon_rgb_label.setAlignment(Qt.AlignCenter)
         self.canon_rgb_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.canon_rgb_label.setMinimumSize(500, 500)
+        self.canon_rgb_label.setMinimumSize(512, 512)
+        self.canon_rgb_label.setMaximumSize(512, 512)
         self.image_grid.addWidget(self.canon_rgb_label, 0, 2)
 
 
@@ -214,7 +217,7 @@ class HSI_RGB_Viewer(QMainWindow):
             try:
                 self.hsi_image = load_hsi_image(header_path)
                 self.current_band = 0
-                self.band_slider.setMaximum(self.hsi_image.shape[2] - 1)
+                self.band_slider.setMaximum(self.hsi_image.shape[2])
                 self.update_hsi_band()
                 self.status_bar.showMessage("HSI Image Loaded")
             except FileNotFoundError as e:
@@ -279,6 +282,7 @@ class HSI_RGB_Viewer(QMainWindow):
         ax.plot(x_values, intensity_values, marker="o")
         ax.set_title("Reflectance percentage by channel")
         ax.set_ylabel("Reflection")
+        ax.set_ylim(0, 1.3)
 
         canvas.draw()
 
@@ -291,50 +295,102 @@ class HSI_RGB_Viewer(QMainWindow):
                 export_histogram(self.hsi_image, file_path, band=self.current_band)
             self.status_bar.showMessage(f"Histogram exported to {file_path}")
 
+    def mark_pixel_on_hsi_rgb_image(self, x, y):
+        """
+        מצייר נקודה אדומה בתמונת ה-RGB של ה-HSI במקום שבו המשתמש לחץ,
+        תוך תיקון הסטת הסיבוב ב-90 מעלות אם יש צורך.
+        """
+        if self.rgb_image is not None:
+            rgb_copy = self.rgb_image.copy()
+            img_height, img_width, _ = self.rgb_image.shape
+            label_width = self.rgb_label.width()
+            label_height = self.rgb_label.height()
+            corrected_x = label_width - x - 1  # הפיכת הציר
+
+            # ציור נקודה אדומה על תמונת ה-RGB של ה-HSI
+            cv2.circle(rgb_copy, (x, y), radius=5, color=(255, 0, 0), thickness=-1)
+
+            # הצגת התמונה המעודכנת
+            self.display_image(rgb_copy, is_hsi=False, target_label=self.rgb_label)
+
+    def mark_pixel_on_hsi_image(self, x, y):
+        """
+        מצייר נקודה אדומה בתמונה במקום שבו המשתמש לחץ.
+        """
+        if self.hsi_image is not None:
+            band_image = self.hsi_image[:, :, self.current_band].copy()
+            label_width = self.hsi_label.width()
+            label_height = self.hsi_label.height()
+
+            # נורמליזציה של התמונה כדי לשמור על איכות התצוגה
+            band_image = cv2.normalize(band_image, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+
+            # הוספת נקודה אדומה
+            cv2.circle(band_image, (y, label_width - x - 1), radius=5, color=(255, 0, 0), thickness=-1)  # נקודה בגודל 5 פיקסלים בצבע אדום
+
+            # סיבוב אם יש צורך
+            band_image = cv2.rotate(band_image, cv2.ROTATE_90_CLOCKWISE)
+
+            # עדכון התצוגה של התמונה
+            self.display_image(band_image, is_hsi=True)
+
     def handle_rgb_click(self, event):
         if self.rgb_image is not None and self.hsi_image is not None:
             label_width = self.rgb_label.width()
             label_height = self.rgb_label.height()
+            # print(f"label_width: {label_width}, label_height: {label_height}")
             img_height, img_width, _ = self.rgb_image.shape
 
             # Calculate the actual pixel in the image
-            x = int(event.pos().x() * img_width / label_width)
-            y = int(event.pos().y() * img_height / label_height)
+            x = int((event.pos().x()/label_width)*img_width)
+            y = int((event.pos().y()/label_height)*img_height)
+            # x = int(event.pos().x())
+            # y = int(event.pos().y())
 
-
-            x = img_width - x - 1
+            # x = img_width - x - 1
+            # הדפסת בדיקה
+            # print(f"📍 RGB Click - Original: ({event.pos().x()}, {event.pos().y()}) | Mapped: ({x}, {y})")
 
 
             # Ensure the pixel coordinates are within bounds
             if 0 <= x < img_width and 0 <= y < img_height:
                 # Access the pixel intensity values using the correct order [x, y]
-                intensity_values = self.hsi_image[x, y, :]
+                intensity_values = self.hsi_image[img_width - x - 1, y, :]
                 self.last_clicked_pixel = (x, y, intensity_values)  # Save the last clicked pixel
                 self.plot_intensity_density(intensity_values)  # Display the intensity plot
                 self.status_bar.showMessage(f"Selected pixel ({x}, {y}) from RGB, displaying HSI intensity values.")
+                self.mark_pixel_on_hsi_image(x, y)  # Mark on HSI
+                self.mark_pixel_on_hsi_rgb_image(x, y)  # Mark on RGB HSI
             else:
                 QMessageBox.warning(self, "Warning", "Selected pixel is out of bounds.")
+
 
     def handle_hsi_click(self, event):
         if self.hsi_image is not None:
             label_width = self.hsi_label.width()
             label_height = self.hsi_label.height()
+            # print(f"label_width: {label_width}, label_height: {label_height}")
             img_height, img_width, _ = self.hsi_image.shape
 
             # Calculate the actual pixel in the image
-            x = int(event.pos().x() * img_width / label_width)
-            y = int(event.pos().y() * img_height / label_height)
+            x = int((event.pos().x() / label_width) * img_width)
+            y = int((event.pos().y() / label_height) * img_height)
 
             # Flip the y-axis to match the image's coordinate system
-            x = img_width - x - 1
+            # x = img_width - x - 1
+
+            # print for checks
+            # print(f"📍 HSI Click - Original: ({event.pos().x()}, {event.pos().y()}) | Mapped: ({x}, {y})")
 
             # Ensure the pixel coordinates are within bounds
             if 0 <= x < img_width and 0 <= y < img_height:
                 # Access the pixel intensity values using the correct order [x, y]
-                intensity_values = self.hsi_image[x, y, :]
+                intensity_values = self.hsi_image[img_width - x - 1, y, :]
                 self.last_clicked_pixel = (x, y, intensity_values)  # Save the last clicked pixel
                 self.plot_intensity_density(intensity_values)  # Display the intensity plot
                 self.status_bar.showMessage(f"Selected pixel ({x}, {y}) from HSI image.")
+                self.mark_pixel_on_hsi_image(x, y)  # mark on HSI
+                self.mark_pixel_on_hsi_rgb_image(x, y)  # mark on RGB HSI
             else:
                 QMessageBox.warning(self, "Warning", "Selected pixel is out of bounds.")
 

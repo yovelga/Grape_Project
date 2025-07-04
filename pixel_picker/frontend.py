@@ -319,16 +319,15 @@ class HSI_RGB_Viewer(QMainWindow):
         """
         if self.hsi_image is not None:
             band_image = self.hsi_image[:, :, self.current_band].copy()
-            label_width = self.hsi_label.width()
-            label_height = self.hsi_label.height()
+            height, width = band_image.shape
 
             # נורמליזציה של התמונה כדי לשמור על איכות התצוגה
             band_image = cv2.normalize(band_image, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
 
-            # הוספת נקודה אדומה
-            cv2.circle(band_image, (y, label_width - x - 1), radius=5, color=(255, 0, 0), thickness=-1)  # נקודה בגודל 5 פיקסלים בצבע אדום
+            # הוספת נקודה אדומה במיקום המתאים לפני הסיבוב
+            cv2.circle(band_image, (y, width - x - 1), radius=5, color=(255, 0, 0), thickness=-1)
 
-            # סיבוב אם יש צורך
+            # סיבוב התמונה לצורך תצוגה
             band_image = cv2.rotate(band_image, cv2.ROTATE_90_CLOCKWISE)
 
             # עדכון התצוגה של התמונה

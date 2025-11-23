@@ -1,28 +1,32 @@
-# 📂 התעלמות מקבצי תמונות
+# 📂 Ignore image files
 *.png
 *.jpg
 *.jpeg
 *.tif
 *.tiff
+*.csv
+*.xlsx
+*.xls
 
-# 📂 התעלמות מקבצי JSON
+# 📂 Ignore JSON files
 *.json
 
-# 📂 התעלמות מסביבות וירטואליות
+# 📂 Ignore virtual environments
 .venv/
 venv/
 
-# 📂 התעלמות מקבצי מערכת ו-PyCharm
+# 📂 Ignore system and PyCharm files
 .idea/
 __pycache__/
 *.pyc
 *.pyo
 .DS_Store
 
-# 📂 התעלמות מקבצי לוג
+# 📂 Ignore log files
 *.log
 
-# 📂 התעלמות מקבצי אובייקטים בינאריים
+# 📂 Ignore binary/object files
 *.bin
 *.exe
 *.dll
+/data/raw/

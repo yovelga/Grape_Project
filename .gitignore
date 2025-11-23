@@ -7,6 +7,8 @@
 *.csv
 *.xlsx
 *.xls
+*.npy
+*.txt
 
 # 📂 Ignore JSON files
 *.json
